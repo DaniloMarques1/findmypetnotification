@@ -1,0 +1,24 @@
+{
+  "name": "findmypetnotification",
+  "version": "1.0.0",
+  "description": "A notification service",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DaniloMarques1/findmypetnotification.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DaniloMarques1/findmypetnotification/issues"
+  },
+  "homepage": "https://github.com/DaniloMarques1/findmypetnotification#readme",
+  "dependencies": {
+    "amqplib": "^0.8.0",
+    "mongoose": "^6.0.5"
+  }
+}
