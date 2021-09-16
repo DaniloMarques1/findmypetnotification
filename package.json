@@ -19,6 +19,7 @@
   "homepage": "https://github.com/DaniloMarques1/findmypetnotification#readme",
   "dependencies": {
     "amqplib": "^0.8.0",
+    "dotenv": "^10.0.0",
     "mongoose": "^6.0.5"
   }
 }
