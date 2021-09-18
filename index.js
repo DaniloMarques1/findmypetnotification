@@ -36,6 +36,7 @@ async function openConnectionAndChannel() {
 }
 
 async function consume(channel, queueName, callback) {
+  await channel.assertQueue(queueName);
   await channel.consume(queueName, callback, { noAck: true });
 }
 
