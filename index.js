@@ -37,10 +37,12 @@ async function openConnectionAndChannel() {
 
 async function consume(channel, queueName, callback) {
   await channel.assertQueue(queueName);
-  await channel.consume(queueName, callback, { noAck: true });
+  await channel.consume(queueName, (msgBytes) => callback(msgBytes, channel));
 }
 
-async function sendEmailAndSaveMessage(msgBytes) {
+async function sendEmailAndSaveMessage(msgBytes, ch) {
+  console.log(ch);
+
   if (msgBytes == null) return;
   const msgString = msgBytes.content.toString();
   const msgJson = JSON.parse(msgString);
@@ -52,9 +54,11 @@ async function sendEmailAndSaveMessage(msgBytes) {
   await sendEmail({ post_author_email, comment_author_email} );
 
   await saveMessage(msgJson);
+
+  await ch.ack(msgBytes);
 }
 
-async function sendEmailStatus(msgBytes) {
+async function sendEmailStatus(msgBytes, ch) {
   // TODO
   if (msgBytes == null) return;
   const msgString = msgBytes.content.toString();
@@ -71,6 +75,7 @@ async function sendEmailStatus(msgBytes) {
     console.log(`send email to ${comment.commentAuthorEmail}`);
   });
 
+  await ch.ack(msgBytes);
 }
 
 async function sendEmail({ post_author_email, comment_author_email }) {
