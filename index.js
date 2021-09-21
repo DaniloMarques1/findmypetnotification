@@ -2,6 +2,7 @@ require('dotenv').config();
 const { connect } = require('amqplib');
 const PostModel = require('./model/Post');
 const mongoose = require('mongoose');
+const nodemailer = require('nodemailer');
 
 const COMMENT_QUEUE = 'COMMENT_QUEUE'; 
 const STATUS_CHANGE_QUEUE = 'STATUS_CHANGE_QUEUE'; 
@@ -41,8 +42,6 @@ async function consume(channel, queueName, callback) {
 }
 
 async function sendEmailAndSaveMessage(msgBytes, ch) {
-  console.log(ch);
-
   if (msgBytes == null) return;
   const msgString = msgBytes.content.toString();
   const msgJson = JSON.parse(msgString);
@@ -51,7 +50,12 @@ async function sendEmailAndSaveMessage(msgBytes, ch) {
 
   const { post_author_email, comment_author_email } = msgJson;
 
-  await sendEmail({ post_author_email, comment_author_email} );
+  await sendEmail({
+    to: post_author_email,
+    userEmail: comment_author_email,
+    subject: 'Someone commented on your post. Go check it out.',
+    text: `User ${comment_author_email} may have some news for you.`,
+  });
 
   await saveMessage(msgJson);
 
@@ -59,27 +63,54 @@ async function sendEmailAndSaveMessage(msgBytes, ch) {
 }
 
 async function sendEmailStatus(msgBytes, ch) {
-  // TODO
   if (msgBytes == null) return;
+
   const msgString = msgBytes.content.toString();
   const msgJson = JSON.parse(msgString);
 
   console.log({ msgJson });
 
   const { post_id } = msgJson;
-  const post = await PostModel.findOneAndDelete({_id: post_id});
-  if (!post) return;
+  const post = await PostModel.findOne({_id: post_id});
+  if (!post) return
 
   const comments = post.comments;
   comments.forEach(comment => {
-    console.log(`send email to ${comment.commentAuthorEmail}`);
+    sendEmail({
+      to: comment.commentAuthorEmail,
+      userEmail: post.postAuthorEmail,
+      subject: 'A post you commented on has changed status',
+      text: `Looks like you helped finding a pet`,
+    }); 
   });
 
+  await PostModel.deleteOne({ _id: post_id });
   await ch.ack(msgBytes);
 }
 
-async function sendEmail({ post_author_email, comment_author_email }) {
-  console.log(`Send email to ${post_author_email}`);
+function sendEmail({ to, userEmail, subject, text }) {
+  const transport = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.NOTIFICATION_EMAIL,
+      pass: process.env.NOTIFICATION_PASSWORD,
+    }
+  });
+
+  const message = {
+    from: process.env.NOTIFICATION_EMAIL,
+    to,
+    subject,
+    text,
+  };
+
+  transport.sendMail(message, function(err, info) {
+    if (err) {
+      console.log(err); // TODO how to recover from this
+    } else {
+      console.log(info);
+    }
+  });
 }
 
 async function saveMessage(msgJson) {
@@ -109,6 +140,5 @@ async function saveMessage(msgJson) {
     }
   );
 }
-
 
 execute();
