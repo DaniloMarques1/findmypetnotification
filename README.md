@@ -1,44 +1,26 @@
 # Find my Pet Notification
 
-## Tecnologias
+Notification service, this project's main purpose is to send an email notification
+after consuming a rabbit MQ queue, the findmypetapi will push a message to the queue
+in two situations:
 
-* Mongodb para salvar os dados de quem comentou no post
-* Nodejs para criação do serviço
-* Mailtrap para envio de emails (verificar plano free)
-* Rabbit MQ, mensageria de onde vai consumir as informações sobre o post
+1. When someone comments on my post
+2. When i change a post status
 
-## Funcionamento
+When the first situation occurs we will consume a message, save the comment author
+email, and then send an email to the post owner informing that a comment has
+been made to one of his posts.
 
-Notificar o autor do post sempre que um comentario for feito no post (exceto, é
-claro, quando o comentario foi feito pelo prorio).
+The second situation will happen when a post owner updates the status of a post,
+informing that a pet was found. Once that happens, everybody who commented on the
+post will receive an email notification showing that he helped (by commenting)
+to find a pet.
 
-Fluxo seria o seguinte:
+We will be using mongodb to save everybody who has commented on a post so we
+can then use it for situation 2.
 
-O usuario John criou um post sobre gato que está desaparecido, um usuario Marry
-foi lá e comentou, informando que viu o gato proximo a sua casa, ao realizar o
-comentario (envio do comentario para api), a api deve além de salvar o
-comentario, produzir uma mensagem para uma fila no rabbit mq, mensagem essa que
-será consumida pelo serviço de notificação.
+### Technologies used
 
-Podemos ter uma fila chamada `post_comment_notification`, e na mensagem vai o endereço
-de email do autor do post (quem vai receber a mensagem), o nome de quem fez o
-comentario e o email de quem fez o comentario.
-
-```json
-    {
-        "post_id": 1,
-        "post_author_email": "john@domain.com",
-        "post_author_name": "john",
-        "comment_author_email": "marry@domain.com",
-        "comment_author_name": "marry"
-    }
-```
-
-O serviço de notificação vai, por sua vez, consumir essa mensagem da fila, e
-criar um email a ser enviado.
-
-Além do envio do email, o serviço de notificação deve manter um registro
-salvo (mongodb) de cada mensagem de comentario consumida, pois, quando o
-post mudar de status, ele vai consumir a base de todos que comentaram e enviar
-um email para todos que comentaram (exceto o autor do post) informando que o post
-mudou seu status.
+* Mongodb
+* Nodejs
+* Rabbit MQ
